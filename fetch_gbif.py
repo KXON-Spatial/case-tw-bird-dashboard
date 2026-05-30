@@ -16,8 +16,26 @@ MVP 2 物種(代表兩種生態策略):
 import json
 import time
 from datetime import date, datetime
-from pygbif import species, occurrences
+import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
+from pygbif import species
 import h3
+
+GBIF_API = "https://api.gbif.org/v1/occurrence/search"
+REQUEST_TIMEOUT = 30   # 秒;pygbif 內部不設 timeout 會卡死,所以直接打 API
+
+def _make_session():
+    s = requests.Session()
+    retry = Retry(
+        total=5, backoff_factor=2,
+        status_forcelist=[429, 500, 502, 503, 504],
+        allowed_methods=["GET"],
+    )
+    s.mount("https://", HTTPAdapter(max_retries=retry))
+    return s
+
+SESSION = _make_session()
 
 SPECIES = [
     {"zh": "黑面琵鷺", "name": "Platalea minor",       "type": "冬候鳥"},
@@ -46,22 +64,37 @@ def resolve_key(name: str) -> int:
     return r["usage"]["key"]
 
 
+def _get(params: dict) -> dict:
+    r = SESSION.get(GBIF_API, params=params, timeout=REQUEST_TIMEOUT)
+    r.raise_for_status()
+    return r.json()
+
+
 def total_count(key: int) -> int:
-    r = occurrences.search(taxonKey=key, country="TW", hasCoordinate=True, limit=0)
-    return r.get("count", 0)
+    d = _get({"taxonKey": key, "country": "TW", "hasCoordinate": "true", "limit": 0})
+    return d.get("count", 0)
 
 
 def fetch(key: int) -> list:
-    """Search API 分頁。撞 100k 上限會停並警告。"""
+    """Search API 分頁。每頁帶 30s timeout + 自動 retry,撞 100k 上限會停。"""
     rows, offset = [], 0
+    fails = 0
     while offset < SEARCH_OFFSET_CAP:
-        r = occurrences.search(
-            taxonKey=key, country="TW", hasCoordinate=True,
-            limit=PAGE_SIZE, offset=offset,
-        )
-        results = r.get("results", [])
+        try:
+            d = _get({"taxonKey": key, "country": "TW", "hasCoordinate": "true",
+                      "limit": PAGE_SIZE, "offset": offset})
+        except requests.RequestException as e:
+            fails += 1
+            print(f"    ⚠ offset {offset:,} 失敗({e.__class__.__name__}),跳過")
+            if fails >= 10:
+                print(f"    ⛔ 連續失敗 10 次,放棄此物種")
+                break
+            offset += PAGE_SIZE
+            continue
+        fails = 0
+        results = d.get("results", [])
         rows.extend(results)
-        if r.get("endOfRecords") or len(results) < PAGE_SIZE:
+        if d.get("endOfRecords") or len(results) < PAGE_SIZE:
             break
         offset += PAGE_SIZE
         if offset % 3000 == 0:
