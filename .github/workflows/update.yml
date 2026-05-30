@@ -1,0 +1,57 @@
+name: 更新並部署鳥類儀表板
+
+# 觸發:每季 1 號 + 手動
+on:
+  schedule:
+    - cron: "0 2 1 1,4,7,10 *"   # 1/4/7/10 月 1 號 UTC 02:00
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 安裝相依
+        run: pip install pygbif h3
+
+      - name: 抓取 + 聚合 GBIF 鳥類資料(約 5–15 分)
+        run: python fetch_gbif.py
+
+      - name: 建置儀表板 HTML
+        run: python build_dashboard.py
+
+      - name: 組裝靜態網站
+        run: |
+          mkdir -p public
+          cp site/CNAME public/CNAME
+          cp bird_dashboard.html public/index.html
+
+      - name: 上傳 Pages 成品
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: 部署到 GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
