@@ -29,14 +29,14 @@ open bird_dashboard.html
 
 ## 部署
 
-GitHub Pages + custom domain `bird.kxon.net`,workflow `.github/workflows/update.yml`
+GitHub Pages + custom domain `bird-tw.kxon.net`,workflow `.github/workflows/update.yml`
 每季(1/4/7/10 月)自動跑 + 可手動觸發。
 
 一次性設定:
 1. push 到新 GitHub repo
 2. Settings → Pages → Source = GitHub Actions
-3. DNS:CNAME `bird.kxon.net` → `<owner>.github.io`
-4. Settings → Pages → Custom domain 填 `bird.kxon.net`,等憑證綠燈
+3. DNS:CNAME `bird-tw.kxon.net` → `<owner>.github.io`
+4. Settings → Pages → Custom domain 填 `bird-tw.kxon.net`,等憑證綠燈
 
 ## 技術備註
 

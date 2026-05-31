@@ -23,7 +23,7 @@ VIEWS = [
 ]
 ELEV_SCALE = 40
 
-SITE_URL = "https://bird.kxon.net"
+SITE_URL = "https://bird-tw.kxon.net"
 PAGE_PATH = "/"
 OG_IMAGE = f"{SITE_URL}/og.png"   # TODO: 加 1200x630 預覽圖
 
