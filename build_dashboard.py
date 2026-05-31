@@ -31,11 +31,13 @@ OG_IMAGE = f"{SITE_URL}/og.png"   # TODO: 加 1200x630 預覽圖
 def main():
     payload = json.load(open(JSON_IN, encoding="utf-8"))
     html = TEMPLATE
+    yrs = f"{payload.get('yearMin', '?')}–{payload.get('yearMax', '?')}"
     for k, v in {
         "__PAYLOAD__": json.dumps(payload, ensure_ascii=False),
         "__VIEWS__": json.dumps(VIEWS),
         "__ELEV__": str(ELEV_SCALE),
         "__FETCHED__": payload.get("fetched") or date.today().isoformat(),
+        "__YEAR_RANGE__": yrs,
         "__PAGE_URL__": f"{SITE_URL}{PAGE_PATH}",
         "__OG_IMAGE__": OG_IMAGE,
     }.items():
@@ -107,6 +109,7 @@ TEMPLATE = r"""<!DOCTYPE html>
     background:linear-gradient(to right,rgb(20,40,90),rgb(40,110,180),
       rgb(80,170,200),rgb(180,220,160),rgb(255,220,80));}
   #legend .ticks{display:flex;justify-content:space-between;color:var(--mut);}
+  #legend .note{margin-top:7px;font-size:10.5px;color:rgba(245,215,110,.85);line-height:1.4;max-width:225px;}
   #legend .cite{margin-top:9px;font-size:9.5px;color:rgba(154,168,181,.7);line-height:1.5;max-width:225px;}
   #attrib{bottom:6px;right:8px;font-size:10px;color:var(--mut);
     background:rgba(12,17,24,.6);padding:3px 7px;border-radius:4px;border:none;backdrop-filter:none;}
@@ -116,7 +119,7 @@ TEMPLATE = r"""<!DOCTYPE html>
 <div id="map"></div>
 <div id="title" class="panel">
   <h1>台灣鳥類季節律動</h1>
-  <p>GBIF occurrence · 資料更新 __FETCHED__</p>
+  <p>GBIF 觀測 <b style="color:var(--accent);font-weight:600">__YEAR_RANGE__</b> 多年累積按月份切片 · 資料更新 __FETCHED__</p>
 </div>
 <div id="controls" class="panel">
   <label>物種</label>
@@ -133,6 +136,7 @@ TEMPLATE = r"""<!DOCTYPE html>
   <div>觀測密度（每 H3 格,對數色階）</div>
   <div class="bar"></div>
   <div class="ticks"><span>少</span><span id="legmax">多</span></div>
+  <div class="note">※「筆數」= 觀測記錄筆數, 非個體隻數; 反映「看到」足跡, 非族群量</div>
   <div class="cite">資料 GBIF.org · 存取 __FETCHED__ · 含 CC BY-NC 4.0 授權,僅供非商業使用</div>
 </div>
 <div id="attrib" class="panel">資料來源 GBIF · 底圖 © CARTO © OpenStreetMap</div>
