@@ -28,8 +28,15 @@ jobs:
       - name: 安裝相依
         run: pip install pygbif h3
 
-      - name: 抓取 + 聚合 GBIF 鳥類資料(約 5–15 分)
-        run: python fetch_gbif.py
+      - name: 抓取 + 聚合 GBIF 鳥類資料(repo 已有 JSON 則跳過)
+        run: |
+          if [ -f bird_h3_monthly.json ]; then
+            echo "使用 repo 內既有的 bird_h3_monthly.json:"
+            ls -la bird_h3_monthly.json
+            echo "(要重抓:本機跑 python fetch_gbif.py 後 commit 即可)"
+          else
+            python fetch_gbif.py
+          fi
 
       - name: 建置儀表板 HTML
         run: python build_dashboard.py

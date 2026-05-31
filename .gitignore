@@ -2,7 +2,7 @@
 __pycache__/
 *.pyc
 
-# CI 重建的產出
-/bird_h3_monthly.json
+# CI 重建的產出(bird_h3_monthly.json 改為提交進 repo 當資料快照,
+# 因為 CI 從 GitHub runner 連 GBIF 慢到 2-4 小時。要重抓的人本機跑後 commit。)
 /bird_dashboard.html
 /public/
